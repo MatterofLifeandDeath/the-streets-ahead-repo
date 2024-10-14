@@ -86,14 +86,23 @@ function insertLineBreaks(text, maxLineLength) {
 
         // Define the marker coordinates and identifiers
         const markerData = [
-            { coordinates: [-0.15, 51.5272], name: 'MARKER 1' },
-            { coordinates: [-0.1276, 51.5072], name: 'MARKER 2' },
-            { coordinates: [-0.1376, 51.5172], name: 'MARKER 3' }
+            { coordinates: [-0.1907456, 51.4633537], name: 'MARKER 1', description: 'Jack', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933004/Jack_tnpyyb.mp3' },
+            { coordinates: [-0.1816687, 51.4668878], name: 'MARKER 2', description: 'Lyndon', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933040/Lyndon_m1a0ka.mp3' },
+            { coordinates: [-0.1770010, 51.4744475], name: 'MARKER 3', description: 'JJ', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933030/JJ_u0lsoh.mp3' },
+            { coordinates: [-0.1690600, 51.4808768], name: 'MARKER 4', description: 'Amelia', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933180/Amelia_ch0wcb.mp3' },
+            { coordinates: [-0.1185972, 51.4918941], name: 'MARKER 6', description: 'Daisy', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933200/Daisy_l0h64s.mp3' },
+            { coordinates: [-0.096883, 51.503852], name: 'MARKER 7', description: 'Samantha', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933204/Samantha_tdchj6.mp3' },
+            { coordinates: [-0.098559, 51.506177], name: 'MARKER 8', description: 'Adina', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933206/Adina_vp8xrc.mp3' }
         ];
         const dotlabelData = [
-            { coordinates: [-0.15, 51.5272], name: 'MARKER 1' },
-            { coordinates: [-0.1276, 51.5072], name: 'MARKER 2' },
-            { coordinates: [-0.1376, 51.5172], name: 'MARKER 3' }
+        { coordinates: [-0.1907456, 51.4633537], name: 'MARKER 1', description: 'Jack' },
+            { coordinates: [-0.1816687, 51.4668878], name: 'MARKER 2', description: 'Lindon' },
+            { coordinates: [-0.1770010, 51.4744475], name: 'MARKER 3', description: 'JJ' },
+            { coordinates: [-0.1690600, 51.4808768], name: 'MARKER 4', description: 'Amelia' },
+            { coordinates: [-0.11194069, 51.4909902], name: 'MARKER 5', description: 'Amanda' },
+            { coordinates: [-0.1185972, 51.4918941], name: 'MARKER 6', description: 'Daisy' },
+            { coordinates: [-0.096883, 51.503852], name: 'MARKER 7', description: 'Samantha' },
+            { coordinates: [-0.098559, 51.506177], name: 'MARKER 8', description: 'Adina' }
         ];
 
 const dotlabelOffsetcoords = dotlabelData.map(marker => ({
@@ -143,9 +152,9 @@ map.addLayer({
                 'features': markerData.map((marker, index) => ({
                     'type': 'Feature',
                     'properties': {
-                        'description': `<strong>${marker.name}</strong>`,
-                        'id': `marker${index + 1}`,
-                        'name': marker.name // Unique name for each marker
+                        'description': `<strong>${marker.description}</strong>`,
+                        'name': marker.name, // Unique name for each marker
+                        'url': marker.url
                     },
                     'geometry': {
                         'type': 'Point',
@@ -230,8 +239,8 @@ map.addSource('dot-labels', {
 
             },
             'properties': {
-                'description': dotlabel.name,
-                'name': dotlabel.name
+                'description': dotlabel.description,
+                'name': dotlabel.name,
             }
         }))
     }
@@ -242,7 +251,7 @@ map.addLayer({
     'type': 'symbol',
     'source': 'dot-labels',
     'layout': {
-        'text-field': ['get', 'name'],
+        'text-field': ['get', 'description'],
         'text-size': 15,
         'text-font': ['Arial Unicode MS Bold', 'Open Sans Regular'],
         'text-offset': [0, 0],
@@ -594,6 +603,14 @@ let clickCounter = 0;
 map.on('click', 'marker-hover-area', function (e) {
     const clickedMarkerCoordinates = e.features[0].geometry.coordinates;
     const clickedMarkerNames = e.features[0].properties.name;
+    const clickedMarkerURL = e.features[0].properties.url;
+    const clickedMarkerDescription = e.features[0].properties.description;
+    // Log the URL and check if it is empty
+    if (clickedMarkerURL) {
+        logEvent('Audio URL retrieved successfully:', clickedMarkerURL);
+    } else {
+        logEvent('Audio URL is missing or empty for marker:', clickedMarkerNames);
+    }logEvent(`Marker DESCRIPTION: ${clickedMarkerDescription}`);
 
     clickCounter++;
 
@@ -624,6 +641,10 @@ map.on('click', 'marker-hover-area', function (e) {
         animatePinkCircle(markerNameMatch);  // Animate pink circle
         animatePurpleCircles(clickedMarkerCoordinates); // Animate purple circle
         animateFadeIn(markerNameMatch);  // Pass the matched label
+
+        // Call the playAudio function to play the associated audio
+        playAudio(clickedMarkerURL);
+
     }
 
     // Fly to the clicked marker
@@ -635,6 +656,25 @@ map.on('click', 'marker-hover-area', function (e) {
 
 });
 
+// Variable to track the currently playing audio
+let currentAudio = null;
+
+// Function for playing audio files
+function playAudio(clickedMarkerURL) {
+    // Stop the currently playing audio (if any)
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0; // Reset the audio to the start
+    }
+
+    // Create a new audio element
+    currentAudio = new Audio(clickedMarkerURL);
+
+    // Play the new audio
+    currentAudio.play().catch(function (error) {
+        console.error('Error playing audio:', error);
+    });
+}
 
 
 
