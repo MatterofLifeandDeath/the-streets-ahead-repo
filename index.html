@@ -6,14 +6,25 @@
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
 <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
 <style>
-  body {margin: 0; padding: 0;}
-  #map {position: absolute; top: 0; bottom: 0; width: 100%;}
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Use viewport height for body */
+        }
+        #map {
+            flex: 1; /* Allow map to grow and fill available space */
+            width: 100%;
+        }
   .mapboxgl-marker-dot {
       width: 10px;
       height: 10px;
       background-color: black;
       border-radius: 50%;
   }
+
+/*PLACE FOR EVENT LOG*/  
   #event-log {
       position: absolute;
       top: 10px;
@@ -28,6 +39,33 @@
       box-shadow: 0px 0px 5px rgba(0,0,0,0.5);
       z-index: 1;
   }
+
+  /* Customizable footer styles */
+.custom-footer {
+    background-color: #ffffff; /* Footer background color */
+    color: #000000; /* Footer text color */
+    text-align: left; /* Center align the text */
+    padding: 20px; /* Customizable padding for thickness */
+    font-size: 18px; /* Footer text size */
+    position: fixed; /* Stick the footer to the bottom */
+    width: 100%; /* Make the footer full width */
+    z-index: 100; /* Set z-index to 100 */
+    bottom: 0; /* Align it to the bottom of the page */
+}
+
+        /* New text style */
+        .footer-text-right {
+            text-align: right; /* Align text to the right */
+            margin: 0; /* Remove default margin */
+            font-size: 10px; /* Match the footer text size */
+            color: black; /* Match the footer text color */
+            position: absolute; /* Position it absolutely within the footer */
+            right: 50px; /* Align it to the right */
+            bottom: 20px; /* Adjust as needed */
+        }
+
+/* You can adjust the thickness by changing the padding value */
+
   /* Custom cursor for clickable marker area */
   .mapboxgl-marker-hover {
       cursor: pointer;
@@ -35,8 +73,12 @@
 </style>
 </head>
 <body>
-<div id="map"></div>
-<div id="event-log">Event Log:</div>
+    <div id="map"></div>
+    <div id="event-log">Event Log:</div>
+    <footer class="custom-footer">
+        the streets ahead alpha build 1.0
+        <div class="footer-text-right">made by Alfie Newson</div>
+    </footer>
 <script>
     maptilersdk.config.apiKey = 'QNezhfuJxAQ0tvE36I0Q';
     var map = new maptilersdk.Map({
@@ -182,7 +224,7 @@ map.addLayer({
             'source': 'places',
             'paint': {
                 'circle-radius': 40, // Larger radius for easier interaction
-                'circle-opacity': 0.5, // 50% opacity to highlight
+                'circle-opacity': 0, // 50% opacity to highlight
                 'circle-color': '#FF0000' // Red color to highlight
             }
         });
