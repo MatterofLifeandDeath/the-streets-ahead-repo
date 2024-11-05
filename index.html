@@ -6,25 +6,14 @@
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
 <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
 <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh; /* Use viewport height for body */
-        }
-        #map {
-            flex: 1; /* Allow map to grow and fill available space */
-            width: 100%;
-        }
+  body {margin: 0; padding: 0;}
+  #map {position: absolute; top: 0; bottom: 0; width: 100%;}
   .mapboxgl-marker-dot {
       width: 10px;
       height: 10px;
       background-color: black;
       border-radius: 50%;
   }
-
-/*PLACE FOR EVENT LOG*/  
   #event-log {
       position: absolute;
       top: 10px;
@@ -38,11 +27,11 @@
       font-size: 12px;
       box-shadow: 0px 0px 5px rgba(0,0,0,0.5);
       z-index: 1;
-      opacity: 1
+      opacity: 0
   }
 
   /* Customizable footer styles */
-.custom-footer {
+  .custom-footer {
     background-color: #ffffff; /* Footer background color */
     color: #000000; /* Footer text color */
     text-align: left; /* Center align the text */
@@ -64,8 +53,6 @@
             right: 50px; /* Align it to the right */
             bottom: 20px; /* Adjust as needed */
         }
-
-/* You can adjust the thickness by changing the padding value */
 
   /* Custom cursor for clickable marker area */
   .mapboxgl-marker-hover {
@@ -135,36 +122,17 @@ function insertLineBreaks(text, maxLineLength) {
             { coordinates: [-0.1690600, 51.4808768], name: 'MARKER 4', description: 'Amelia', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933180/Amelia_ch0wcb.mp3' },
             { coordinates: [-0.1185972, 51.4918941], name: 'MARKER 6', description: 'Daisy', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933200/Daisy_l0h64s.mp3' },
             { coordinates: [-0.096883, 51.503852], name: 'MARKER 7', description: 'Samantha', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933204/Samantha_tdchj6.mp3' },
-            { coordinates: [-0.098559, 51.506177], name: 'MARKER 8', description: 'Adina', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933206/Adina_vp8xrc.mp3' },
-            { coordinates: [-0.141417, 51.511950], name: 'MARKER 9', description: 'David', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729205619/David_ou6yvs.mp3' },
-            { coordinates: [-0.141000, 51.509800], name: 'MARKER 10', description: 'Augustina', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729182787/Augustina_gm3ryq.mp3' },
-            { coordinates: [-0.121825, 51.516350], name: 'MARKER 11', description: 'Charlie', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729182767/Charlie_pety5s.mp3' },
-            { coordinates: [-0.1491908, 51.5177463], name: 'MARKER 12', description: 'Beverley', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729208154/Beverley_h4o5q0.mp3' },
-            { coordinates: [-0.150303, 51.508607], name: 'MARKER 13', description: 'Rory', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729208151/Rory_qleibm.mp3' },
-            { coordinates: [-0.156892, 51.517201], name: 'MARKER 14', description: 'Jane', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729208159/Jane_yatbhi.mp3' },
-            { coordinates: [-0.140399, 51.528558], name: 'MARKER 15', description: 'Ranya', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729292388/Ranya_l1pq9z.mp3' },
-            { coordinates: [-0.107874, 51.501498], name: 'MARKER 16', description: 'Hamad', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729554719/Hamad_kfjqbj.mp3' },
-            { coordinates: [-0.106855, 51.502299], name: 'MARKER 17', description: 'Darren', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729554732/Darren_esioij.mp3' },
-            { coordinates: [-0.093941, 51.504753], name: 'MARKER 18', description: 'Anya', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729554714/Anya_utn8kr.mp3' }
+            { coordinates: [-0.098559, 51.506177], name: 'MARKER 8', description: 'Adina', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933206/Adina_vp8xrc.mp3' }
         ];
         const dotlabelData = [
-        { coordinates: [-0.1907456, 51.4633537], name: 'MARKER 1', description: 'Jack', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933004/Jack_tnpyyb.mp3' },
-            { coordinates: [-0.1816687, 51.4668878], name: 'MARKER 2', description: 'Lyndon', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933040/Lyndon_m1a0ka.mp3' },
-            { coordinates: [-0.1770010, 51.4744475], name: 'MARKER 3', description: 'JJ', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933030/JJ_u0lsoh.mp3' },
-            { coordinates: [-0.1690600, 51.4808768], name: 'MARKER 4', description: 'Amelia', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933180/Amelia_ch0wcb.mp3' },
-            { coordinates: [-0.1185972, 51.4918941], name: 'MARKER 6', description: 'Daisy', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933200/Daisy_l0h64s.mp3' },
-            { coordinates: [-0.096883, 51.503852], name: 'MARKER 7', description: 'Samantha', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933204/Samantha_tdchj6.mp3' },
-            { coordinates: [-0.098559, 51.506177], name: 'MARKER 8', description: 'Adina', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1728933206/Adina_vp8xrc.mp3' },
-            { coordinates: [-0.141417, 51.511950], name: 'MARKER 9', description: 'David', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729205619/David_ou6yvs.mp3' },
-            { coordinates: [-0.141000, 51.509800], name: 'MARKER 10', description: 'Augustina', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729182787/Augustina_gm3ryq.mp3' },
-            { coordinates: [-0.121825, 51.516350], name: 'MARKER 11', description: 'Charlie', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729182767/Charlie_pety5s.mp3' },
-            { coordinates: [-0.1491908, 51.5177463], name: 'MARKER 12', description: 'Beverley', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729208154/Beverley_h4o5q0.mp3' },
-            { coordinates: [-0.150303, 51.508607], name: 'MARKER 13', description: 'Rory', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729208151/Rory_qleibm.mp3' },
-            { coordinates: [-0.156892, 51.517201], name: 'MARKER 14', description: 'Jane', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729208159/Jane_yatbhi.mp3' },
-            { coordinates: [-0.140399, 51.528558], name: 'MARKER 15', description: 'Ranya', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729292388/Ranya_l1pq9z.mp3' },
-            { coordinates: [-0.107874, 51.501498], name: 'MARKER 16', description: 'Hamad', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729554719/Hamad_kfjqbj.mp3' },
-            { coordinates: [-0.106855, 51.502299], name: 'MARKER 17', description: 'Darren', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729554732/Darren_esioij.mp3' },
-            { coordinates: [-0.093941, 51.504753], name: 'MARKER 18', description: 'Anya', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729554714/Anya_utn8kr.mp3' }
+        { coordinates: [-0.1907456, 51.4633537], name: 'MARKER 1', description: 'Jack' },
+            { coordinates: [-0.1816687, 51.4668878], name: 'MARKER 2', description: 'Lindon' },
+            { coordinates: [-0.1770010, 51.4744475], name: 'MARKER 3', description: 'JJ' },
+            { coordinates: [-0.1690600, 51.4808768], name: 'MARKER 4', description: 'Amelia' },
+            { coordinates: [-0.11194069, 51.4909902], name: 'MARKER 5', description: 'Amanda' },
+            { coordinates: [-0.1185972, 51.4918941], name: 'MARKER 6', description: 'Daisy' },
+            { coordinates: [-0.096883, 51.503852], name: 'MARKER 7', description: 'Samantha' },
+            { coordinates: [-0.098559, 51.506177], name: 'MARKER 8', description: 'Adina' }
         ];
 
 const dotlabelOffsetcoords = dotlabelData.map(marker => ({
@@ -370,7 +338,7 @@ const markerConnectingLines = markerData.flatMap((marker1, index1) =>
                     coordinates: [marker1.coordinates, marker2.coordinates],
                 },
                 properties: {
-                    //name: `${marker1.name} <-> ${marker2.name}`//
+                    name: `${marker1.name} <-> ${marker2.name}`
                 }
             }))
         );
@@ -390,7 +358,7 @@ const markerConnectingLines = markerData.flatMap((marker1, index1) =>
             'source': 'lines',
             'layout': {},
             'paint': {
-                'line-color': '#FF0000', // Red color for lines
+                'line-color': '#FF00FF', // Red color for lines
                 'line-width': 1, // 1 pixel thickness (default)
                 'line-opacity': 0.5, // 50% opacity
                 'line-dasharray': [2, 2] // Dashed line
@@ -412,7 +380,8 @@ const markerConnectingLines = markerData.flatMap((marker1, index1) =>
             'paint': {
                 'text-color': '#FF0000', // Red text color for labels
                 'text-halo-color': '#FFFFFF', // White halo around text
-                'text-halo-width': 2 // Width of halo
+                'text-halo-width': 2, // Width of halo
+                'text-opacity': 0
             }
         });
 
@@ -696,7 +665,7 @@ map.on('click', 'marker-hover-area', function (e) {
 
 
     // Trigger all animations after 3 clicks
-    if (clickCounter === 2) {
+    if (clickCounter === 3) {
         clickCounter = 0; // Reset counter after animations
 
         // Trigger animations
