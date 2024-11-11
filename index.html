@@ -1,19 +1,32 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Map with Markers, Offset Dots, Lines, and Labels</title>
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
 <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
 <style>
-  body {margin: 0; padding: 0;}
-  #map {position: absolute; top: 0; bottom: 0; width: 100%;}
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Use viewport height for body */
+        }
+        #map {
+            flex: 1; /* Allow map to grow and fill available space */
+            width: 100%;
+        }
   .mapboxgl-marker-dot {
       width: 10px;
       height: 10px;
       background-color: black;
       border-radius: 50%;
   }
+
+/*PLACE FOR EVENT LOG*/  
   #event-log {
       position: absolute;
       top: 10px;
@@ -27,11 +40,11 @@
       font-size: 12px;
       box-shadow: 0px 0px 5px rgba(0,0,0,0.5);
       z-index: 1;
-      opacity: 0
+      opacity: 1
   }
 
   /* Customizable footer styles */
-  .custom-footer {
+.custom-footer {
     background-color: #ffffff; /* Footer background color */
     color: #000000; /* Footer text color */
     text-align: left; /* Center align the text */
@@ -54,6 +67,8 @@
             bottom: 20px; /* Adjust as needed */
         }
 
+/* You can adjust the thickness by changing the padding value */
+
   /* Custom cursor for clickable marker area */
   .mapboxgl-marker-hover {
       cursor: pointer;
@@ -64,19 +79,28 @@
     <div id="map"></div>
     <div id="event-log">Event Log:</div>
     <footer class="custom-footer">
-        the streets ahead alpha build 1.1
+        the streets ahead alpha build 1.1.2 (some new experimental animations)
         <div class="footer-text-right">made by Alfie Newson</div>
     </footer>
 <script>
+
+// Check if Turf.js is loaded successfully
+if (typeof turf !== 'undefined') {
+    logEvent("Turf.js is loaded successfully!");
+} else {
+    logEvent("Error: Turf.js failed to load.");
+}
+
     maptilersdk.config.apiKey = 'QNezhfuJxAQ0tvE36I0Q';
     var map = new maptilersdk.Map({
         container: 'map',
         style: 'https://api.maptiler.com/maps/0350150a-3864-4b90-a34e-4b6f608e59b1/style.json?key=QNezhfuJxAQ0tvE36I0Q', // Custom Map Style
         center: [-0.1276, 51.5072], // Center coordinates (adjusted to match your map)
-        zoom: 10 // Initial zoom level
+        zoom: 11 // Initial zoom level
     });
 
-    let lastClickedMarker = { id: null, coordinates: null }; // Variable to store the last clicked marker name and coordinates
+    let lastClickedMarker = { name: null, coordinates: null }; // Variable to store the last clicked marker name and coordinates
+    let lastClickedDotLabel = { name: null, coordinates: null };
 
 // Function to log code execution
 function logEvent(code) {
@@ -87,10 +111,6 @@ function logEvent(code) {
     logDiv.scrollTop = logDiv.scrollHeight; // Auto-scroll to the bottom
 }
     map.on('load', async function () {
-        const defaultMarker = await map.loadImage(
-            'https://res.cloudinary.com/dtzh2txcx/image/upload/v1724867783/map-pointer-icon2.png');
-
-        map.addImage('custom-marker', defaultMarker.data);
 
 // Helper function to insert line breaks at word boundaries for any text exceeding the max length
 function insertLineBreaks(text, maxLineLength) {
@@ -153,10 +173,117 @@ function insertLineBreaks(text, maxLineLength) {
             { coordinates: [-0.106855, 51.502299], name: 'MARKER 17', description: 'Darren', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729554732/Darren_esioij.mp3' },
             { coordinates: [-0.093941, 51.504753], name: 'MARKER 18', description: 'Anya', url: 'https://res.cloudinary.com/dtzh2txcx/video/upload/v1729554714/Anya_utn8kr.mp3' }
         ];
+// Define a GeoJSON source for the lines connecting the markers
+const markerConnectingLines = markerData.flatMap((marker1, index1) =>
+            markerData.slice(index1 + 1).map(marker2 => ({
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: [marker1.coordinates, marker2.coordinates],
+                },
+                properties: {
+                    name: `${marker1.name} <-> ${marker2.name}`
+                }
+            }))
+        );
+
+        map.addSource('lines', {
+            'type': 'geojson',
+            'data': {
+                'type': 'FeatureCollection',
+                'features': markerConnectingLines
+            }
+        });
+
+        // Add a layer to display the connecting lines
+        map.addLayer({
+            'id': 'lines',
+            'type': 'line',
+            'source': 'lines',
+            'layout': {},
+            'paint': {
+                'line-color': '#ADD000', // Red color for lines
+                'line-width': 2, // 1 pixel thickness (default)
+                'line-opacity': 0.8, // 50% opacity
+                'line-dasharray': [4, 3] // Dashed line
+            }
+        });
+
+        // Add a layer to display the labels at the midpoint of each line
+        map.addLayer({
+            'id': 'line-labels',
+            'type': 'symbol',
+            'source': 'lines',
+            'layout': {
+                'text-field': ['get', 'name'], // Get the line name from properties
+                'text-size': 10, // Font size
+                'text-anchor': 'center', // Anchor the text in the center
+                'symbol-placement': 'line-center', // Place the label at the midpoint of the line
+                'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'] // Font family
+            },
+            'paint': {
+                'text-color': '#FF0000', // Red text color for labels
+                'text-opacity': 0
+            }
+        });
+
+        // Add a clickable area layer for dashed lines
+        map.addLayer({
+            'id': 'line-hover-area',
+            'type': 'line',
+            'source': 'lines',
+            'paint': {
+                'line-width': 15, // Wider clickable area
+                'line-opacity': 0 // Fully transparent, just for interaction
+            }
+        });
+
+
+// Correctly define the needle circle data before using it
+const needleCircleData = {
+    'type': 'FeatureCollection',
+    'features': markerData.map(marker => {
+        const coordinates = [marker.coordinates[0], marker.coordinates[1]]; // not offset
+        return {
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Point',
+                'coordinates': coordinates
+            },
+            'properties': {
+                'name': marker.name
+            },
+        };
+    })
+};
+
+// Add the needle circles GeoJSON source
+map.addSource('needle-circles', {
+    'type': 'geojson',
+    'data': needleCircleData
+});
+
+// Add a layer to render the needle circles with a black stroke and transparent fill
+map.addLayer({
+    'id': 'needle-circles',
+    'type': 'circle',
+    'source': 'needle-circles',
+    'paint': {
+        'circle-radius': 0,               // Radius of the circle
+        'circle-color': '#FF5733',        // Fill color (this will be invisible due to opacity setting)
+        'circle-opacity': 0,              // Makes the circle itself transparent
+        'circle-stroke-color': '#000000', // Black color for the circle stroke
+        'circle-stroke-width': 12          // Adjust the thickness of the stroke as needed
+    }
+});
+
+
 
 const dotlabelOffsetcoords = dotlabelData.map(marker => ({
 coordinates: [marker.coordinates[0] - 0.011, marker.coordinates[1]], // Offset for dot
 }));
+
+
 // Define pink circle data before using it
 const pinkCircleData = {
     'type': 'FeatureCollection',
@@ -180,6 +307,7 @@ map.addSource('pink-circle', {
     'type': 'geojson',
     'data': pinkCircleData
 });
+
 
 // Add a layer to display the circles
 map.addLayer({
@@ -236,6 +364,106 @@ map.addLayer({
             }
         });
 
+function createClosedBezierLinesWithRandomVariations(markerData, resolution = 100000) {
+    const features = markerData.map(marker => {
+        const startCoordinate = marker.coordinates;
+
+        // Array to hold coordinates, starting with the start coordinate
+        const lineCoordinates = [startCoordinate];
+
+        // Add an extra point close to the endpoint to reduce bezier curvature
+        const nearEndPoint = [
+            startCoordinate[0] + 0.0001,  // Offset slightly to the right
+            startCoordinate[1]            // Same latitude
+        ];
+        lineCoordinates.push(nearEndPoint);
+
+        // Add the additional midpoint with the same latitude as the starting point, but with a longitude offset
+        const additionalMidpointLongitudeOffset = Math.random() * (0.006 - 0.001) + 0.001;
+        const additionalMidpoint = [
+            startCoordinate[0] + additionalMidpointLongitudeOffset,  // Offset longitude
+            startCoordinate[1]  // Same latitude as start coordinate
+        ];
+        lineCoordinates.push(additionalMidpoint);
+
+        // Generate six midpoints with random variations based on 70% or 30% probability
+        for (let i = 1; i <= 6; i++) {
+            const smallOffset = 0.002;
+            const bigOffset = Math.random() * (0.005 - 0.003) + 0.003;
+            const useSmallOffset = Math.random() < 0.9;  // 70% chance for smallOffset
+
+            const chosenOffset = useSmallOffset ? smallOffset : bigOffset;
+            const randomLongitudeOffset = (Math.random() * chosenOffset * 2) - chosenOffset;
+            const randomLatitudeOffset = (Math.random() * chosenOffset * 2) - chosenOffset;
+
+            const midpoint = [
+                startCoordinate[0] + randomLongitudeOffset,
+                startCoordinate[1] + randomLatitudeOffset
+            ];
+
+            // Add the randomized midpoint to the line coordinates
+            lineCoordinates.push(midpoint);
+        }
+
+        // Finish by closing the linestring (endpoint = start point)
+        lineCoordinates.push(startCoordinate);
+
+        // Create lineString and bezier curve with specified resolution
+        const line = turf.lineString(lineCoordinates);
+        const curvedLine = turf.bezierSpline(line, { resolution: resolution });
+
+        // Return as GeoJSON Feature
+        return {
+            type: 'Feature',
+            geometry: curvedLine.geometry,
+            properties: {
+                name: marker.name
+            }
+        };
+    });
+
+    // Log all marker names
+    const markerNames = markerData.map(marker => marker.name).join(', ');
+    logEvent(`Bezier Line names are: [${markerNames}]`);
+
+    return {
+        type: 'FeatureCollection',
+        features: features
+    };
+}
+
+// Define the GeoJSON data for the "closed-bezier-lines" source with adjustable resolution and constrained random variations
+const closedBezierLineDataWithVariations = createClosedBezierLinesWithRandomVariations(markerData, 50000);  // Example resolution and max offset
+
+
+
+
+// Update the map source and layer to reflect the new closed bezier line data with random variations
+map.addSource('closed-bezier-lines', {
+    type: 'geojson',
+    data: closedBezierLineDataWithVariations
+});
+
+// Add the bezier line layer to the map
+map.addLayer({
+    id: 'closed-bezier-lines',
+    type: 'line',
+    source: 'closed-bezier-lines',
+    paint: {
+        'line-color': '#000000', // Customize color
+        'line-opacity': 1,
+        'line-width': 3          // Customize width
+    }
+});
+
+
+
+
+
+
+
+
+
 // Create an array to hold the lines between dots and markers
 const dotMarkerLines = [];
 // Add a GeoJSON source for the lines connecting dots to markers
@@ -259,8 +487,8 @@ map.addSource('dot-marker-lines', {
             'layout': {},
             'paint': {
                 'line-color': '#000000', // Black color
-                'line-width': 1, // 1 pixel thickness
-                'line-opacity': 0.5 // 50% opacity
+                'line-width': 3, // 1 pixel thickness
+                'line-opacity': 1 // 50% opacity
             }
         });
 
@@ -347,73 +575,6 @@ map.addLayer({
         'circle-opacity': 0.3 // 0% opacity
     }
 });
-
-// Define a GeoJSON source for the lines connecting the markers
-const markerConnectingLines = markerData.flatMap((marker1, index1) =>
-            markerData.slice(index1 + 1).map(marker2 => ({
-                type: 'Feature',
-                geometry: {
-                    type: 'LineString',
-                    coordinates: [marker1.coordinates, marker2.coordinates],
-                },
-                properties: {
-                    name: `${marker1.name} <-> ${marker2.name}`
-                }
-            }))
-        );
-
-        map.addSource('lines', {
-            'type': 'geojson',
-            'data': {
-                'type': 'FeatureCollection',
-                'features': markerConnectingLines
-            }
-        });
-
-        // Add a layer to display the connecting lines
-        map.addLayer({
-            'id': 'lines',
-            'type': 'line',
-            'source': 'lines',
-            'layout': {},
-            'paint': {
-                'line-color': '#FF00FF', // Red color for lines
-                'line-width': 1, // 1 pixel thickness (default)
-                'line-opacity': 0.5, // 50% opacity
-                'line-dasharray': [2, 2] // Dashed line
-            }
-        });
-
-        // Add a layer to display the labels at the midpoint of each line
-        map.addLayer({
-            'id': 'line-labels',
-            'type': 'symbol',
-            'source': 'lines',
-            'layout': {
-                'text-field': ['get', 'name'], // Get the line name from properties
-                'text-size': 10, // Font size
-                'text-anchor': 'center', // Anchor the text in the center
-                'symbol-placement': 'line-center', // Place the label at the midpoint of the line
-                'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'] // Font family
-            },
-            'paint': {
-                'text-color': '#FF0000', // Red text color for labels
-                'text-halo-color': '#FFFFFF', // White halo around text
-                'text-halo-width': 2, // Width of halo
-                'text-opacity': 0
-            }
-        });
-
-        // Add a clickable area layer for dashed lines
-        map.addLayer({
-            'id': 'line-hover-area',
-            'type': 'line',
-            'source': 'lines',
-            'paint': {
-                'line-width': 15, // Wider clickable area
-                'line-opacity': 0 // Fully transparent, just for interaction
-            }
-        });
 
 // Handle marker click
 map.on('click', 'marker-hover-area', function (e) {
@@ -687,15 +848,19 @@ map.on('click', 'marker-hover-area', function (e) {
     if (clickCounter === 2) {
         clickCounter = 0; // Reset counter after animations
 
-        // Trigger animations
-        animatePinkCircle(markerNameMatch);  // Animate pink circle
-        animatePurpleCircles(clickedMarkerCoordinates); // Animate purple circle
-        animateFadeIn(markerNameMatch);  // Pass the matched label
-
-        // Call the playAudio function to play the associated audio
+        // Trigger specific animations
+        animatePinkCircle(clickedMarkerNames);
+        animatePurpleCircles(clickedMarkerCoordinates);
+        animateFadeIn(clickedMarkerNames);
         playAudio(clickedMarkerURL);
 
+        // Trigger reverse animation on line with matching marker name
+        reverseAnimateLine('closed-bezier-lines', 5000, clickedMarkerNames);
+// Animate circle radius and stroke width for `needle-circles`
+        animateCircleRadiusAndStroke('needle-circles', 5, 6); // target radius of 2, stroke width of 6
+        animatePinkCirclesWithAudioProgress('pink-circle')
     }
+    
 
     // Fly to the clicked marker
     map.flyTo({
@@ -706,10 +871,48 @@ map.on('click', 'marker-hover-area', function (e) {
 
 });
 
+
+// Ease in-out quadratic function for smooth transitions
+function easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+// Function to animate both circle radius and stroke width
+function animateCircleRadiusAndStroke(layerId, targetRadius, targetStrokeWidth, duration = 1000) {
+    const startRadius = 0;
+    const startStrokeWidth = 12;
+    const startTime = performance.now();
+
+    function animationStep(currentTime) {
+        // Calculate elapsed time as a fraction of duration
+        const elapsedTime = currentTime - startTime;
+        const progress = Math.min(elapsedTime / duration, 1); // Cap progress at 1
+
+        // Apply easing function
+        const easedProgress = easeInOutQuad(progress);
+
+        // Calculate current radius and stroke width based on eased progress
+        const currentRadius = startRadius + (targetRadius - startRadius) * easedProgress;
+        const currentStrokeWidth = startStrokeWidth + (targetStrokeWidth - startStrokeWidth) * easedProgress;
+
+        // Set the circle radius and stroke width in the map layer
+        map.setPaintProperty(layerId, 'circle-radius', currentRadius);
+        map.setPaintProperty(layerId, 'circle-stroke-width', currentStrokeWidth);
+
+        // Continue the animation if not yet complete
+        if (progress < 1) {
+            requestAnimationFrame(animationStep);
+        }
+    }
+
+    // Start the animation
+    requestAnimationFrame(animationStep);
+}
+
 // Variable to track the currently playing audio
 let currentAudio = null;
 
-// Function for playing audio files
+// Function for playing audio files with a 1-second delay
 function playAudio(clickedMarkerURL) {
     // Stop the currently playing audio (if any)
     if (currentAudio) {
@@ -720,19 +923,127 @@ function playAudio(clickedMarkerURL) {
     // Create a new audio element
     currentAudio = new Audio(clickedMarkerURL);
 
-    // Play the new audio
-    currentAudio.play().catch(function (error) {
-        console.error('Error playing audio:', error);
-    });
+    // Add a 1-second delay before playing the new audio
+    setTimeout(function() {
+        // Play the new audio
+        currentAudio.play().catch(function (error) {
+            console.error('Error playing audio:', error);
+        });
+    }, 1000); // 1000 milliseconds = 1 second
 }
+
 
 
 
 /* Consolidated animation functions */
 
+
+
+// Bezier easing function (ease-in-out for smooth control)
+function easeInOutBezier(t) {
+    return t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 5) / 2;
+}
+
+// Function to reverse animate a line by erasing it backwards along its path
+function reverseAnimateLine(layerId, duration, markerName) {
+    const lineSource = map.getSource(layerId);  // Original GeoJSON source with all lines
+
+    // Find the line feature matching the clicked marker name
+    const lineFeature = lineSource._data.features.find(
+        feature => feature.properties.name === markerName
+    );
+
+    // Log an event if no matching line is found
+    if (!lineFeature) {
+        logEvent(`No line found for marker name: ${markerName}`);
+        return;
+    }
+
+    // Log the selected marker for animation
+    logEvent(`Animating reverse line for marker name: ${markerName}`);
+
+    // Create a copy of all features except the clicked marker's feature
+    const otherLinesData = {
+        type: 'FeatureCollection',
+        features: lineSource._data.features.filter(
+            feature => feature.properties.name !== markerName
+        )
+    };
+
+    // Update the original source to exclude the clicked line
+    lineSource.setData(otherLinesData);
+
+    // Create a temporary GeoJSON source and layer for the animation of the clicked line
+    const animationSourceId = `${layerId}-animation-${markerName}`;
+    const animationLayerId = `${layerId}-animation-layer-${markerName}`;
+    map.addSource(animationSourceId, {
+        type: 'geojson',
+        data: {
+            type: 'FeatureCollection',
+            features: [lineFeature]  // Only the clicked marker’s line
+        }
+    });
+
+    map.addLayer({
+        id: animationLayerId,
+        type: 'line',
+        source: animationSourceId,
+        paint: {
+            'line-color': '#000000',
+            'line-opacity': 1,  // Customize animation opacity
+            'line-width': 3           // Customize animation width
+        }
+    });
+
+    const originalCoordinates = lineFeature.geometry.coordinates;
+    const frameRate = 60; // Target frame rate (frames per second)
+    const totalSteps = Math.ceil((duration / 1200) * frameRate); // Total animation steps based on duration
+    let currentStep = 0;
+
+    function animate() {
+        if (currentStep >= totalSteps) {
+            // Animation complete, restore original data and remove temporary layer and source
+            lineSource.setData(lineSource._data);  // Restore original lines including the animated line
+            map.removeLayer(animationLayerId);
+            map.removeSource(animationSourceId);
+            return;
+        }
+
+        // Calculate progress as a fraction from 0 to 1
+        const progress = easeInOutBezier(currentStep / totalSteps);
+        const index = Math.floor(progress * originalCoordinates.length);
+
+        // Slice the coordinates to "erase" backwards, starting with full line and removing points
+        const reversedCoordinates = originalCoordinates.slice(0, originalCoordinates.length - index);
+
+        // Update temporary GeoJSON source data with the new partial line
+        map.getSource(animationSourceId).setData({
+            type: 'FeatureCollection',
+            features: [{
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: reversedCoordinates
+                },
+                properties: { name: markerName }
+            }]
+        });
+
+        currentStep++;
+        requestAnimationFrame(animate);  // Recursively call to animate next step
+    }
+
+    animate(); // Start animation
+}
+
+
+
+
 function animatePurpleCircles(clickedCoordinates) {
-    const duration = 2800;
-    const startTime = performance.now();
+    const duration = 4200;
+    const delay = 1800; // Delay before the animation starts (in milliseconds)
 
     // Retrieve the existing purple circles data
     const purpleCirclesData = map.getSource('purple-circles')._data;
@@ -743,12 +1054,17 @@ function animatePurpleCircles(clickedCoordinates) {
         feature.geometry.coordinates[0] -= 0.01; // Move target to the left by 0.01
     });
 
+    setTimeout(() => {
+        const startTime = performance.now(); // Start the timer
+
     function animate(time) {
         const elapsedTime = time - startTime;
         const t = Math.min(elapsedTime / duration, 1); // Normalize time between 0 and 1
 
         // Apply exaggerated cubic ease-out function
-        const easeOutT = 1 - Math.pow(1 - t, 9); // Exaggerate cubic ease-out
+        const easeOutT = t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2; // Exaggerate cubic ease-out
 
         // Interpolate features with ease-out
         const interpolatedData = JSON.parse(JSON.stringify(purpleCirclesData));
@@ -791,6 +1107,7 @@ if (Math.abs(originalCoords[0] - clickedCoordinates[0]) < tolerance && Math.abs(
     }
 
     requestAnimationFrame(animate);
+}, delay); // Set the delay before starting the animation
 }
 
 // Function to animate pink circle scaling for the matching marker name
@@ -838,6 +1155,43 @@ function animateFadeIn(name) {
     }, 1200);
     logEvent(`Fading in label with name: ${name}`);
 }
+
+function animatePinkCirclesWithAudioProgress(name) {
+    const duration = 4200; // Duration for the Y-offset animation (same as previous one)
+    const startTime = performance.now();
+    
+    // Get the initial state of the purple circles
+    const pinkCircleData = map.getSource('pink-circle')._data;
+    const originalData = JSON.parse(JSON.stringify(pinkCircleData));
+
+    function animate(time) {
+        const elapsedTime = time - startTime;
+        const t = Math.min(elapsedTime / duration, 1); // Normalize time between 0 and 1
+        
+        // Calculate the percentage of the audio that has completed
+        const audioProgress = audioElement.currentTime / audioElement.duration;
+        
+        // Map the audio progress (0 to 1) to Y-coordinate range (-0.01 to 0)
+        const yOffset = -0.01 + (0.01 * audioProgress); // -0.01 at 0% to 0 at 100%
+
+        // Interpolate the Y-coordinates based on the audio progress
+        const interpolatedData = JSON.parse(JSON.stringify(originalData));
+        interpolatedData.features.forEach((feature, index) => {
+            const originalCoords = originalData.features[index].geometry.coordinates;
+            feature.geometry.coordinates[1] = originalCoords[1] + yOffset; // Apply Y offset
+        });
+
+        // Update the purple circles with new positions
+        map.getSource('pink-circle').setData(interpolatedData);
+
+        if (t < 1) {
+            requestAnimationFrame(animate);
+        }
+    }
+
+    requestAnimationFrame(animate);
+}
+
 
 // Initialize dotMarkerLines between markers and purple circles
 markerData.forEach((marker, index) => {
