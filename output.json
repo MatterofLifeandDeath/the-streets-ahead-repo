@@ -1,4 +1,18 @@
 {
+    "turnip": [
+        {
+            "file": "101624_David_processed",
+            "time": 5000
+        },
+        {
+            "file": "101824_Ranya_processed",
+            "time": 5000
+        },
+        {
+            "file": "101624_Augustina_processed",
+            "time": 5000
+        }
+    ],
     "most": [
         {
             "file": "101624_David_processed",
